@@ -1,75 +1,25 @@
 import base64
-from gmail import gmail
-from gsheets import gsheets
+from googleapiclient.discovery import build
+from modules.gmail import create_access_token, generate_service, query_messages, get_message
+from modules.trello import create_board, create_list, create_card
+from settings import email_address, scopes, subject, items_start, items_end
 
 
-################################################################
-# Extract CSV attachment from an email and save it locally.    #
-################################################################
-
-user_id = "<user_id>@gmail.com"
-gmail_service = gmail.create_service()
-messages = gmail.query_messages(gmail_service, user_id, "<subject>")
-
-for message in messages:
-    msg = gmail.read_message(gmail_service, user_id, message.get("id"))
-    subject = next(header["value"] for header in msg["payload"]["headers"] if header["name"] == "Subject")
-    parts = msg["payload"]["parts"]
-    message_id = msg["id"]
-    for part in parts:
-        attachment_id = part["body"].get("attachmentId")
-        if attachment_id:
-            attachment = gmail_service.users().messages().attachments().get(userId=user_id,
-                                                                      messageId=message_id,
-                                                                      id=attachment_id
-                                                                      ).execute()
-            data = attachment["data"]
-            file_data = base64.urlsafe_b64decode(data.encode("UTF-8"))
-            path = part["filename"]
-            with open(path, "wb") as f:
-                f.write(file_data)
-
-
-################################################################
-# Read, update, and append values to Google Sheets.            #
-################################################################
-
-spreadsheet = "<spreadsheet_id>"
-service = gsheets.create_service()
-
-# Read values from the spreadsheet
-rows = gsheets.read_spreadsheet(service, spreadsheet, "<tab_name>!A:D")
-for row in rows:
-    print(*row)
-
-# Update spreadsheet
-values = {"values": [["This cell is updated.", "This one too."]]}
-gsheets.update_spreadsheet(service, spreadsheet, "<tab_name>!A8", values)
-
-# Append to spreadsheet
-values = {"values": [["This goes at the end.", "This one too."]]}
-gsheets.append_spreadsheet(service, spreadsheet, "<tab_name>", values)
-
-
-################################################################
-# Extact CSV contents from the email attachment                #
-# and append them to Google Sheets.                            #
-################################################################
+creds = create_access_token()
+generate_service(creds, scopes)
+service = build("gmail", "v1", credentials=creds)
+messages = query_messages(service, email_address, subject)
 
 for message in messages:
-    msg = gmail.read_message(gmail_service, user_id, message.get("id"))
-    subject = next(header["value"] for header in msg["payload"]["headers"] if header["name"] == "Subject")
-    parts = msg["payload"]["parts"]
-    message_id = msg["id"]
-    for part in parts:
-        attachment_id = part["body"].get("attachmentId")
-        if attachment_id:
-            attachment = gmail_service.users().messages().attachments().get(userId=user_id,
-                                                                      messageId=message_id,
-                                                                      id=attachment_id
-                                                                      ).execute()
-            data = attachment["data"]
-            file_data = base64.urlsafe_b64decode(data.encode("UTF-8"))
-            file_data = [data.split(",") for data in file_data.decode().split("\r\n")]
-            values = {"values": file_data}
-            gsheets.append_spreadsheet(service, spreadsheet, "<tab_name>", values)
+    body = get_message(service, email_address, message.get("id"))
+    subject = next(header["value"] for header in body["payload"]["headers"] \
+                   if header["name"] == "Subject")
+    message = base64.b64decode([part["body"]["data"] for part in body["payload"]["parts"] \
+                               if part["mimeType"] == "text/plain"][0]).decode("utf-8")
+    message_split = message.split("\r\n")
+    message_split = message_split[message_split.index(items_start): message_split.index(items_end)]
+    list_id = create_list(create_board(subject), items_start)
+    for msg in message_split[1:-1]:
+        if msg.strip() != "":
+            create_card(list_id, msg)
+    break
