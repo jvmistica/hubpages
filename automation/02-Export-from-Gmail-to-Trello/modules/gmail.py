@@ -5,28 +5,35 @@ from google.auth.transport.requests import Request
 from apiclient import errors
 
 
-def create_access_token():
+def create_service():
+    """
+    Creates a Gmail service based on the credentials.json found in the current directory.
+    """
+
     creds = None
     if os.path.exists("modules/token.pickle"):
         with open("modules/token.pickle", "rb") as token:
             creds = pickle.load(token)
-    return creds
 
-
-def generate_service(creds, scopes):
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                "modules/credentials.json", scopes)
+                "gmail/credentials.json", scopes)
             creds = flow.run_local_server(port=0)
-        # Save the credentials for the next run
-        with open("modules/token.pickle", "wb") as token:
+        with open("gmail/token.pickle", "wb") as token:
             pickle.dump(creds, token)
+
+    service = build("gmail", "v1", credentials=creds)
+    return service
 
 
 def query_messages(service, user_id, subject):
+    """
+    Searches the mailbox for a matching subject.
+    """
+
     try:
         query = f"subject: {subject}"
         response = service.users().messages().list(userId=user_id, q=query).execute()
@@ -43,7 +50,11 @@ def query_messages(service, user_id, subject):
         print("An error occurred.", error)
 
 
-def get_message(service, user_id, msg_id):
+def read_message(service, user_id, msg_id):
+    """
+    Read the contents of the email.
+    """
+ 
     try:
         message = service.users().messages().get(userId=user_id, id=msg_id).execute()
         return message
