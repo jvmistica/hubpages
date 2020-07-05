@@ -20,9 +20,9 @@ def create_service():
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                "gmail/credentials.json", scopes)
+                "modules/credentials.json", scopes)
             creds = flow.run_local_server(port=0)
-        with open("gmail/token.pickle", "wb") as token:
+        with open("modules/token.pickle", "wb") as token:
             pickle.dump(creds, token)
 
     service = build("gmail", "v1", credentials=creds)
