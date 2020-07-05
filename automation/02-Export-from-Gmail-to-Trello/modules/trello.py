@@ -3,6 +3,10 @@ from settings import key, token
 
 
 def create_board(board_name):
+    """
+    Creates a board based on the given board name.
+    """
+
     url = "https://api.trello.com/1/boards/"
     querystring = {"name": board_name, "key": key, "token": token}
     response = requests.request("POST", url, params=querystring)
@@ -11,6 +15,10 @@ def create_board(board_name):
 
 
 def create_list(board_id, list_name):
+    """
+    Creates a list based on the given list name.
+    """
+
     url = f"https://api.trello.com/1/boards/{board_id}/lists"
     querystring = {"name": list_name, "key": key, "token": token}
     response = requests.request("POST", url, params=querystring)
@@ -19,6 +27,10 @@ def create_list(board_id, list_name):
 
 
 def create_card(list_id, card_name):
+    """
+    Creates a card based on the given card name.
+    """
+
     url = f"https://api.trello.com/1/cards"
     querystring = {"name": card_name, "idList": list_id, "key": key, "token": token}
     response = requests.request("POST", url, params=querystring)
