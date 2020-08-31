@@ -5,6 +5,9 @@ from settings import key, token
 def create_board(board_name):
     """
     Creates a board based on the given board name.
+
+    :param board_name:
+    :returns: board_id
     """
 
     url = "https://api.trello.com/1/boards/"
@@ -17,6 +20,10 @@ def create_board(board_name):
 def create_list(board_id, list_name):
     """
     Creates a list based on the given list name.
+
+    :param board_id:
+    :param list_name:
+    :returns: list_id
     """
 
     url = f"https://api.trello.com/1/boards/{board_id}/lists"
@@ -29,6 +36,10 @@ def create_list(board_id, list_name):
 def create_card(list_id, card_name):
     """
     Creates a card based on the given card name.
+
+    :param list_id:
+    :param card_name:
+    :returns: card_id
     """
 
     url = "https://api.trello.com/1/cards"
