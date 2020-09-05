@@ -77,11 +77,11 @@ def get_holidays(area):
 
 def get_free_time(holidays):
     """
-    Looks for all free time (holidays or weekends) and long weekends.
+    Looks for all free time - holidays and weekends.
 
-    :param weekends: The date exact dates for Saturdays and Sundays
+    :param weekends: The dates for Saturdays and Sundays
     :param holidays: The holiday dates
-    :returns: A list containing all free times and all long weekends
+    :returns: A list containing long weekends and all free time
     """
 
     holidays.extend(get_weekends())
@@ -90,7 +90,7 @@ def get_free_time(holidays):
     free_time = []
     long_weekends = []
 
-    # Check for long holidays/weekends greater than or equal to three days
+    # Check for consecutive days that fall into a holiday or weekend
     for holiday in holidays:
         days += 1
         from_date = holiday if days == 1 else from_date
