@@ -10,8 +10,11 @@ messages = query_messages(service, email_address, subject)
 # Go through each email that matches the subject
 for message in messages:
     body = read_message(service, email_address, message.get("id"))
-    message = base64.b64decode([part["body"]["data"] for part in body["payload"]["parts"] \
-                               if part["mimeType"] == "text/plain"][0]).decode("utf-8")
+    parts = body["payload"]["parts"]
+    for part in parts:
+        if part["mimeType"] == "text/plain":
+            message = part["body"]["data"]
+            message = base64.b64decode(message).decode("utf-8")
 
     # Find the parts of the message from items_start to items_end inclusive
     lines = message.split("\r\n")
